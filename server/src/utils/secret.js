@@ -1,0 +1,2 @@
+const secret = "hjhj23h8d39d3d93hfg3ghsajdk233402x2hjasdasdashasd7y4asfh38480afhjifj3fh8ahf89hj-3th8ah0f37g7agf";
+export default secret;

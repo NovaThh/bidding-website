@@ -1,0 +1,44 @@
+POST http://localhost:3000/tokens
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "admin"
+}
+> {%
+    client.test("Login successful, token received", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.global.set("token", response.body.token);
+    });
+%}
+
+###
+###
+POST http://localhost:3000/tokens
+Content-Type: application/json
+
+{
+  "email": "admin@gmail.com",
+  "password": "admin"
+}
+> {%
+    client.test("Login successful, token received", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.global.set("token", response.body.token);  // Store admin token globally
+    });
+%}
+
+###
+POST http://localhost:3000/tokens
+Content-Type: application/json
+
+{
+  "email": "user@gmail.com",
+  "password": "user"
+}
+> {%
+    client.test("Login successful, non-admin token received", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.global.set("nonAdminToken", response.body.token);
+    });
+%}

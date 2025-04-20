@@ -1,0 +1,83 @@
+GET http://localhost:3000/gemstones/testing-id2/bids
+Authorization: Bearer {{token}}
+
+> {%
+    client.test("Get bids for gemstone successful", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.length > 0, "No bids found for this gemstone");
+        client.assert(response.body[0].hasOwnProperty('userName'), "Bids do not include user names");
+    });
+%}
+###
+POST http://localhost:3000/gemstones/testing-id3/bids
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "testing-id-user1",
+  "amount": 660
+}
+
+> {%
+    client.test("Bid placed successfully", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+        client.assert(response.body.hasOwnProperty('id'), "Bid ID is not returned");
+    });
+%}
+
+###
+# Try to place a bid with an invalid amount (e.g., negative value)
+POST http://localhost:3000/gemstones/testing-id-user1/bids
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "testing-id-user1",
+  "amount": -50
+}
+
+> {%
+    client.test("Invalid bid amount", function() {
+        client.assert(response.status === 400, "Response status is not 400");
+        client.assert(response.body.error.message === "Invalid bid amount.", "Error message mismatch");
+    });
+%}
+
+###
+POST http://localhost:3000/gemstones/testing-id2/bids
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "testing-id-user1",
+  "amount": 1000
+}
+
+> {%
+    client.test("Attempt to place a bid after auction ended", function() {
+        client.assert(response.status === 409, "Expected status 409 Conflict");
+        client.assert(response.body.error.code === 409, "Expected error code 409");
+        client.assert(response.body.error.message === "The auction has ended.", "Expected auction ended error message");
+    });
+%}
+
+###
+POST http://localhost:3000/gemstones/testing-id4/bids
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "userId": "testing-id-user2",
+  "amount": 201
+}
+
+> {%
+    client.test("Attempt to place a bid lower than the current highest bid", function() {
+        client.assert(response.status === 409, "Expected status 409 Conflict");
+        client.assert(response.body.error.code === 409, "Expected error code 409");
+        client.assert(response.body.error.message.includes("Bid amount must be higher than"), "Expected highest bid error message");
+        client.assert(response.body.highestBid > 200, "Current highest bid should be higher than the bid amount");
+    });
+%}
+
+

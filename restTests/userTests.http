@@ -1,0 +1,86 @@
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "testuser@gmail.com",
+  "password": "password123"
+}
+
+> {%
+    client.test("User registration successful", function() {
+        client.assert(response.status === 201, "Response status is not 201");
+        client.assert(response.body.message === "User registered successfully", "Message mismatch");
+        client.assert(response.body.user.email === "testuser@gmail.com", "Email mismatch");
+    });
+%}
+
+###
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "Incomplete User"
+}
+
+> {%
+    client.test("User registration failed due to missing fields", function() {
+        client.assert(response.status === 400, "Response status is not 400");
+        client.assert(response.body.error.message === "All fields are required.", "Error message mismatch");
+    });
+%}
+
+###
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "Duplicate User",
+  "email": "admin@gmail.com",
+  "password": "password123"
+}
+
+> {%
+    client.test("User registration failed due to duplicate email", function() {
+        client.assert(response.status === 409, "Response status is not 409");
+        client.assert(response.body.error.message === "Bad credentials.", "Error message mismatch");
+    });
+%}
+
+###
+GET http://localhost:3000/users/testing-id-user1
+Authorization: Bearer {{token}}
+
+> {%
+    client.test("Get user by ID successful", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.id === "testing-id-user1", "User ID mismatch");
+    });
+%}
+
+###
+GET http://localhost:3000/users/invalidUserId
+Authorization: Bearer {{token}}
+
+> {%
+    client.test("Get user by ID failed for invalid ID", function() {
+        client.assert(response.status === 404, "Response status is not 404");
+        client.assert(response.body.error.message === "No user found.", "Error message mismatch");
+    });
+%}
+
+###
+GET http://localhost:3000/users
+Authorization: Bearer {{token}}
+
+> {%
+    client.test("Get all users successful", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.userList.length > 0, "User list is empty");
+    });
+%}
+
+
+
+
+

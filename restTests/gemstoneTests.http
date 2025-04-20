@@ -1,0 +1,212 @@
+GET http://localhost:3000/gemstones
+
+> {%
+    client.test(
+        "Request executed successfully",
+        function() {
+            client.assert(response.status === 200, "Response status is not 200");
+            client.assert(response.body.gemstones.length > 0, "Gemstone list is empty");
+        }
+    );
+%}
+
+###
+
+GET http://localhost:3000/gemstones?name=Yevheniia
+
+> {%
+
+client.test("Gemstone search by name successful", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+    client.assert(response.body.gemstones[0].name === 'Yevheniias Amethyst', "Gemstone name does not match");
+});
+
+%}
+
+###
+GET http://localhost:3000/gemstones?name=NonExistent
+
+> {%
+
+client.test("No gemstones found for invalid search", function() {
+    client.assert(response.status === 200, "Expected 200 status code");
+    client.assert(Array.isArray(response.body.gemstones), "Expected gemstones to be an array");
+    client.assert(response.body.gemstones.length === 0, "Expected no gemstones to be found");
+});
+
+%}
+
+###
+
+GET http://localhost:3000/gemstones/this-id-is-fixed-for-API-testing-purpose-in-IDE
+
+> {%
+
+client.test("Retrieve gemstone by ID successful", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+    client.assert(response.body.id === "this-id-is-fixed-for-API-testing-purpose-in-IDE", "Gemstone ID does not match");
+});
+
+%}
+
+###
+GET http://localhost:3000/gemstones/invalidId
+
+> {%
+
+client.test("Gemstone not found for invalid ID", function() {
+    client.assert(response.status === 404, "Response status is not 404");
+    client.assert(response.body.error.message === "No gemstones found.", "Error message mismatch");
+});
+
+%}
+
+###
+
+POST http://localhost:3000/gemstones
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "New Gemstone",
+  "weight": 12,
+  "type": "Ruby",
+  "shape": "Round",
+  "description": "A beautiful ruby gemstone",
+  "startingPrice": 5000,
+  "endDate": "2024-11-01",
+  "photo": "/newGemstone.jpg"
+}
+
+> {%
+
+client.test("Gemstone creation successful", function() {
+    client.assert(response.status === 201, "Response status is not 201");
+    client.assert(response.body.message === "Gemstone successfully created.", "Message mismatch");
+});
+
+%}
+
+###
+
+POST http://localhost:3000/gemstones
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Incomplete Gemstone"
+}
+
+> {%
+client.test("Gemstone creation failed due to missing fields", function() {
+    client.assert(response.status === 400, "Response status is not 400");
+    client.assert(response.body.error.message === "All fields are required.", "Error message mismatch");
+});
+%}
+
+###
+POST http://localhost:3000/gemstones
+Content-Type: application/json
+Authorization: Bearer {{nonAdminToken}}
+
+{
+  "name": "Another Gemstone",
+  "weight": 10,
+  "type": "Opal",
+  "shape": "Oval",
+  "description": "A beautiful opal gemstone",
+  "startingPrice": 2000,
+  "endDate": "2024-12-01",
+  "photo": "/opalGemstone.jpg"
+}
+> {%
+    client.test("Unauthorized gemstone creation", function() {
+        client.assert(response.status === 403, "Response status is not 403");
+        client.assert(response.body.error === "Admin access required.", "Error message mismatch");
+    });
+%}
+
+
+###
+PUT http://localhost:3000/gemstones/this-id-is-fixed-for-API-testing-purpose-in-IDE
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Updated Gemstone",
+  "weight": 14,
+  "type": "Diamond",
+  "shape": "Square",
+  "description": "An updated gemstone description",
+  "startingPrice": 10000,
+  "endDate": "2024-12-01",
+  "photo": "/updatedGemstone.jpg"
+}
+> {%
+client.test("Gemstone update successful", function() {
+    client.assert(response.status === 200, "Response status is not 200");
+    client.assert(response.body.message === "Gemstone successfully updated!", "Message mismatch");
+});
+%}
+
+###
+PUT http://localhost:3000/gemstones/invalidId
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Non-existent Gemstone"
+}
+> {%
+client.test("Gemstone update failed for invalid ID", function() {
+    client.assert(response.status === 404, "Response status is not 404");
+    client.assert(response.body.error === "Gemstone is not found", "Error message mismatch");
+});
+%}
+
+###
+DELETE http://localhost:3000/gemstones/this-id-is-fixed-for-API-testing-purpose-in-IDE
+Authorization: Bearer {{token}}
+
+> {%
+client.test("Gemstone deletion successful", function() {
+    client.assert(response.status === 204, "Response status is not 204");
+});
+%}
+
+###
+DELETE http://localhost:3000/gemstones/testing-id2
+Authorization: Bearer {{nonAdminToken}}
+
+> {%
+client.test("Unauthorized gemstone deletion", function() {
+    client.assert(response.status === 403, "Response status is not 403");
+    client.assert(response.body.error === "Admin access required.", "Error message mismatch");
+});
+%}
+
+###
+DELETE http://localhost:3000/gemstones/invalidId
+Authorization: Bearer {{token}}
+
+> {%
+client.test("Gemstone deletion failed for invalid ID", function() {
+    client.assert(response.status === 404, "Response status is not 404");
+    client.assert(response.body.message === "Gemstone not found", "Error message mismatch");
+});
+%}
+
+###
+GET http://localhost:3000/gemstones?shape=Square&type=Emerald&minWeight=1&maxWeight=20
+Authorization: Bearer {{token}}
+
+> {%
+    client.test("Auctions filtered by attributes successful", function() {
+        client.assert(response.status === 200, "Response status is not 200");
+        client.assert(response.body.gemstones.length > 0, "No gemstones found with specified attributes");
+        client.assert(response.body.gemstones[0].shape === 'Square', "Type does not match");
+        client.assert(response.body.gemstones[0].type === 'Emerald', "Type does not match");
+        client.assert(response.body.gemstones.every(gem => gem.weight >= 1 && gem.weight <= 20), "No gemstone within the specified weight range");
+    });
+%}
+
