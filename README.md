@@ -1,6 +1,10 @@
 # Introduction
 
-This project is focussed on web technologies. Therefore, Javascript arrays is used to store data.
+For this project, I will be designing, implementing, and testing an auction site. 
+
+In short, people should be able to view items put up for aution on this site. only administrators can manage the items for auction. Meaning they can create update and delete them. If they would like to place a bid, users should register for an account and log in. Once logged in, they can place a bid.  
+
+This project is focused on web technologies. Therefore, JavaScript arrays are used to store data.
 
 # Requirements
 
